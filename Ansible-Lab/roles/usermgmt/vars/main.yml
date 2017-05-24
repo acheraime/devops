@@ -1,0 +1,30 @@
+---
+groups_to_add:
+  - dev
+  - devops
+  - consultant
+  - auditor
+  - journalist
+
+devops_users:
+  - jdoe
+  - admin
+  - vagrant
+
+consultant_users:
+  - jconsult
+  - jdoe
+
+dev_users:
+  - jsmith
+  - adubois
+
+journalist_users:
+  - bnews
+  - xtimes
+
+inactive_users:
+  - adubois
+  - bnews
+  - auditor
+  - jdoe

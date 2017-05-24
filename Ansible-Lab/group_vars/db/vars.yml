@@ -1,0 +1,18 @@
+---
+
+# Postgresql superuser password
+postgres_password: "{{ vault_postgres_password }}"
+
+# Subnet allows to connect to Postgres
+postgres_allowed_subnets: 
+  - 192.168.33.0/24
+  - 10.10.100.0/28
+
+# Postgres superuser
+postgres_user: postgres
+
+# Devops user password
+devopsuser_password: "{{ vault_devopsuser_password }}"
+
+# PostgreSQL version
+postgres_major_version: 9.4

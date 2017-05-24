@@ -1,0 +1,74 @@
+---
+- name: "Creating user groups"
+  group: 
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ groups_to_add }}"
+
+- name: "Creating DEVOPS user accounts"
+  user: 
+    name: "{{ item }}"
+    state: present
+    groups: devops
+    append: yes
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+  with_items: "{{ devops_users }}"
+
+- name: "Creating DEV user accounts"
+  user:
+    name: "{{ item }}"
+    state: present
+    groups: dev
+    append: yes
+    generate_ssh_key: yes
+    ssh_key_file: .ssh/id_rsa
+  with_items: "{{ dev_users }}"
+
+- name: "Creating Consultant user accounts"
+  user:
+    name: "{{ item }}"
+    state: present
+    group: consultant
+    createhome: no
+    expires: 1502484317 
+  with_items: "{{ consultant_users }}"
+
+- name: "Creating Journalist user accounts"
+  user:
+    name: "{{ item }}"
+    state: present
+    group: journalist
+    createhome: no
+  with_items: "{{ journalist_users }}"
+
+- name: "Updating sudoers"
+  template:
+    src: templates/sudoers.j2
+    dest: /etc/sudoers.d/ansible.conf
+    owner: root
+    group: root
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+- name: "Gathering user accounts append them to a list"
+  shell: awk -F":" '{ print $1 }' /etc/passwd
+  register: local_user_accounts
+  check_mode: no
+  failed_when: local_user_accounts.rc > 0
+
+- name: "Adding user accounts to local file"
+  template:
+    src: templates/local_user_accounts.j2
+    dest: /tmp/{{ inventory_hostname }}-users.txt
+  notify: fetch accountfile
+
+- name: "Deactivating user accounts"
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: no
+  with_items: "{{ inactive_users }}"
+
+

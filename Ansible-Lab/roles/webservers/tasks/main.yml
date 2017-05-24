@@ -1,0 +1,64 @@
+---
+- name: "Installing nginx"
+  apt: 
+    name: nginx-full
+    state: installed
+    update_cache: yes
+
+- name: "Updating nginx.conf"
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: "^user"
+    line: "user {{ nginx_user }} {{ nginx_group }};"
+    state: present
+  notify: restart nginx
+
+- name: "Checking existance of nginx default nginx page"
+  stat:
+    path: /var/www/html/index.nginx-debian.html
+  register: dfindex
+
+- name: "Removing nginx default page if exists"
+  file:
+   path: /var/www/html/index.nginx-debian.html
+   state: absent
+  when: dfindex.stat.exists
+
+- name: "Adding custom index page"
+  template: 
+    src: templates/nginx-index.j2
+    dest: /var/www/html/index.html
+    owner: www-data
+    group: www-data
+    mode: "0640"
+  notify: reload nginx
+
+- name: "Installing supervisor, redis ..."
+  apt: 
+    name: "{{ item }}"
+    state: installed
+    update_cache: yes
+  with_items:
+    - supervisor
+    - redis-server
+    - python-dev
+    - python-setuptools
+    - libpq-dev
+    - python-psycopg2
+
+- name: "Installing python-pip"
+  apt:
+    name: python-pip
+    state: latest
+    update_cache: yes
+
+- name: "Installing Virtual Environment"
+  pip:
+    name: virtualenv
+    state: latest
+
+ 
+
+
+
+

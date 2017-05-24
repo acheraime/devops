@@ -1,0 +1,20 @@
+---
+  - hosts: all
+    become: true
+    gather_facts: false
+    roles: 
+      - commons
+      - usermgmt
+
+  - hosts: web
+    become: true
+    gather_facts: false
+    roles:
+      - webservers
+
+  - hosts: db
+    become: true
+    gather_facts: false
+    roles:
+      - databases
+

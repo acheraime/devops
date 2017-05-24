@@ -1,0 +1,71 @@
+---
+########### PostgreSQL installation and configuration ######
+
+- name: "Installing PostgreSQL"
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  with_items:
+    - libpq-dev
+    - python-psycopg2
+    - postgresql
+    - postgresql-contrib
+
+- name: "Updating postgresql.conf file so pg listens to the host IP"
+  lineinfile:
+    path: /etc/postgresql/{{ postgres_major_version }}/main/postgresql.conf
+    regexp: "^#listen_addresses"
+    line: "listen_addresses='localhost,{{ inventory_hostname }}'"
+    state: present
+    owner: postgres
+    group: postgres
+  notify: reload postgres
+
+- name: "Updating postgres user password"
+  shell: export PGPASSWORD={{ postgres_password }} && psql -c "ALTER USER postgres WITH ENCRYPTED PASSWORD '{{ postgres_password }}';"
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  register: result
+ 
+- block:
+   - debug:
+       msg: "{{ result.stdout }}"
+  rescue:
+   - debug:
+       msg: "Checking mode"         
+
+- name: "Backing up pg_hba.conf file to pg_hba.conf.bak"
+  shell: mv /etc/postgresql/{{ postgres_major_version }}/main/pg_hba.conf /etc/postgresql/{{ postgres_major_version }}/main/pg_hba.conf.bak
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  
+- name: "Updating pg_hba.conf as per pg_hba.j2 template"
+  template: 
+    src: templates/pg_hba.j2
+    dest: /etc/postgresql/{{ postgres_major_version }}/main/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: reload postgres
+
+- name: "Creating database user 'devopsuser'"
+  postgresql_user:
+    db: devopsDB
+    name: devopsuser
+    password: "{{ devopsuser_password }}"
+    state: present
+    login_user: "{{ postgres_user }}"
+    login_password: "{{ postgres_password  }}"
+    role_attr_flags: LOGIN
+    priv: ALL
+
+- name: "Create database devopsDB"
+  postgresql_db:
+    name: devopsDB
+    encoding: UTF-8
+    login_user: "{{ postgres_user }}"
+    login_password: "{{ postgres_password }}"
+    owner: devopsuser     

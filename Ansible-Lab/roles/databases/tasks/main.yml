@@ -1,0 +1,4 @@
+---
+
+# Including PostgreSQL TASKS
+- include: postgres.yml   

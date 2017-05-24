@@ -1,0 +1,9 @@
+###### This file contains user accounts gathered from the Hosts #######
+###### This is from host  {{ inventory_hostname  }}
+
+# User list
+{% for user_name in local_user_accounts.stdout_lines %}
+   {{ user_name }}
+{% endfor %}
+
+

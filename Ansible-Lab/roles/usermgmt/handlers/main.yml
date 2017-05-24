@@ -1,0 +1,7 @@
+---
+- name: fetch accountfile
+  fetch: 
+    src: /tmp/{{ inventory_hostname }}-users.txt
+    dest: files/{{ inventory_hostname}}-users.txt
+    flat: yes
+

@@ -1,0 +1,16 @@
+ - name: "Installation of common packages"
+   apt: pkg={{ item }} state=installed
+   with_items:
+     - dnsutils
+     - git
+     - vim
+     - ntp
+     - lvm2
+     - at
+
+ - name: "Installing Sudo"
+   apt: pkg=sudo state=installed
+
+ - name: "Installing htop"
+   apt: pkg=htop state=installed
+

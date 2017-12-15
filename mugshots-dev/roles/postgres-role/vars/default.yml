@@ -1,0 +1,40 @@
+---
+# Postgresql task variable common to all OS family
+
+postgres_version: 9.5
+postgis_version: 2.4
+
+# PF database user
+pf_db_user: newproducts
+pf_db_pass: development
+
+# Database name
+pf_db_name: politifact
+
+# PostgreSQL user/host  permission
+db_user_perm:
+        - {con_type: "local", database: "{{ pf_db_name }}", user: "{{ pf_db_user }}", subnet: "", type: "password"}
+        - {con_type: "host", database: "{{ pf_db_name }}", user: "{{ pf_db_user }}", subnet: "127.0.0.1/32", type: "password"}
+        - {con_type: "host", database: "{{ pf_db_name }}", user: "{{ pf_db_user }}", subnet: "::1/128", type: "password"}
+        - {con_type: "host", database: "{{ pf_db_name }}", user: "{{ pf_db_user }}", subnet: "{{ pf_web_host|default('127.0.0.1') }}/32", type: "password"}
+        - {con_type: "host", database: "{{ pf_db_name }}", user: "{{ pf_db_user }}", subnet: "{{ pf_cms_host|default('127.0.0.1') }}/32", type: "password"}
+
+# PostgreSQL superuser/password
+postgres_user: postgres
+postgres_pass: postgres490!
+
+# Database port
+pf_db_port: 5432
+
+# Load/restore mock data 
+postgres_mock: False
+postgres_dump_file: "/home/acheraime/pf-dump.dmp"
+
+
+
+# PostgreSQL configuration
+postgres_max_con: 100
+postgres_shared_buffers: 128
+postgres_work_mem: 4
+postgres_socket_dir: /var/run/postgresql
+postgres_ext_pid: "/var/run/postgresql/{{ postgres_version }}-main.pid"

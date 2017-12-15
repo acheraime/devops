@@ -1,0 +1,25 @@
+--- 
+####### Debian specific variables #####
+#
+package_mgr: apt
+
+nginx_package: nginx-full
+
+
+# Nginx default debian index page
+nginx_default_index: /var/www/html/index.nginx-debian.html
+
+
+# Configuration base path
+nginx_config_base_path: /etc/nginx
+
+# Configuration file location
+nginx_config_file: "{{nginx_config_base_path}}/nginx.conf"
+
+nginx_init_name: nginx
+
+# Custom nginx page location
+nginx_custom_index: /var/www/html/index.html
+
+# Root document
+nginx_root_doc: /var/www/html

@@ -1,0 +1,28 @@
+---
+###### OS neutral variables
+#
+nginx_user: www-data
+nginx_group: www-data
+
+# Maximum workers
+nginx_worker_processes: 2
+
+# Max connection per worker
+nginx_max_connections: 1024
+
+# Run PID
+nginx_run_pid: /run/nginx.pid
+
+# Configuration base path
+nginx_conf_base: /etc/nginx
+
+# Sites available and enabled dirs
+nginx_site_enabled_dir: "{{ nginx_conf_base }}/sites-enabled"
+nginx_site_available_dir: "{{ nginx_conf_base }}/sites-available"
+
+# Nginx configuration file
+nginx_conf_file: "{{ nginx_conf_base }}/nginx.conf"
+
+# Default vhost
+nginx_default_vhost: "{{ nginx_site_available_dir }}/default"
+

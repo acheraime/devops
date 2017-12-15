@@ -1,0 +1,55 @@
+---
+########### PostgreSQL configuration ######
+
+- block:
+  # Check if data dir exist and something in it
+  - name: Check if we postgres has been initialized already
+    stat: 
+      path: "{{ postgres_data_dir }}/PG_VERSION"
+    register: data_dir
+
+  # If on centos we need to initialize postgres first
+  - name: Postinstall setup and initialization
+    shell: "{{ postgres_setup_dir }}/postgresql95-setup initdb"
+    when: data_dir.stat.exists == False
+
+  when: ( ansible_distribution|lower == 'centos')
+
+- name: Prepare postgres.conf as postgres.conf.j2 per template
+  template:
+    src: postgres.conf.j2
+    dest: "{{ postgres_conf_file }}"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: restart postgres
+
+- name: Prepare pg_hba.conf as per pg_hba.j2 template
+  template: 
+    src: pg_hba.j2
+    dest: "{{ postgres_hba_file }}"
+    owner: postgres
+    group: postgres
+    mode: "0640"
+  notify: restart postgres
+
+# Let's restart postgres
+- name: Restart postgresql
+  systemd:
+    name: "{{ postgres_init_name }}"
+    state: restarted
+
+# Wait for 20 seconds for Postgres to come up
+- name: Wait that postgres is up and running
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: 5432
+    delay: 20
+    msg: Unable to connect to postgres
+
+- name: Updating postgres user default password
+  shell: export PGPASSWORD={{ postgres_pass }} && psql -c "ALTER USER postgres WITH ENCRYPTED PASSWORD '{{ postgres_pass }}';"
+  become: yes
+  become_user: postgres
+  become_method: sudo
+  register: result

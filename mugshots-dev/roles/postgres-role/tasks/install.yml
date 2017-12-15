@@ -1,0 +1,85 @@
+---
+########### PostgreSQL installation tasks ######
+
+
+#Install depspendencies
+- name: Install postgres dependencies
+  action: >
+      {{ package_mgr }} name={{ item }} state=installed update_cache=yes
+  with_items: "{{ postgres_dependencies }}"
+  tags:
+    - install
+    - postgresdeps
+
+# Configure postgresql Debian repository
+- block:
+    - name: Install postgres repos key
+      apt_key:
+        url: "{{ postgres_repo_key }}" 
+        state: present
+
+    - name: Add postgres repos list
+      apt_repository:
+        repo: "deb {{ postgres_repo_url }}"
+        state: present
+        filename: "{{ postgres_repo_dest }}"
+        update_cache: yes
+
+  when: ( ansible_os_family|lower  == 'debian')
+
+# Configure EPEL and postgres repository Centos based
+- block:
+  - name: Install EPEL repo
+    yum_repository:
+      name: epel
+      description: EPEL yum repos
+      baseurl: "{{ epel_url }}"
+      gpgcheck: yes
+ 
+  - name: Fetch postgres RPM
+    yum:
+      name: "{{ postgres_rpm_url }}"
+      state: present
+      update_cache: yes
+
+  - name: Fetch postgis RPM
+    yum:
+      name: "{{ postgis_rpm_url }}"
+      state: present
+      update_cache: yes
+ 
+  when: ( ansible_distribution|lower == 'centos')
+
+# With all deps install proceed to postgres installation
+- name: Install postgres
+  action: >
+     {{ package_mgr }} name={{ postgres_package }} state=installed
+ 
+# At this point postgresql and postgis are installed 
+# let's install some extra packages
+- name: Install postgres extra packages
+  action: >
+    {{ package_mgr }} name={{ item }} state=installed
+  with_items: "{{ postgres_extra }}"
+
+# Activate postgres init service
+- name: Activate postgresql init service
+  systemd:
+    name: "{{ postgres_init_name }}"
+    enabled: yes
+
+# Update firewall configuration to allow inbound postgres traffic
+- block:
+    - name: Start Firewalld service if not started yet
+      systemd:
+        name: firewalld
+        state: started
+
+    - name: Add inbound rule for postgres
+      firewalld:
+        port: 5432/tcp
+        permanent: true
+        state: enabled
+        immediate: yes
+
+  when: ( ansible_os_family|lower == 'redhat' and ansible_distribution_major_version == '7' )

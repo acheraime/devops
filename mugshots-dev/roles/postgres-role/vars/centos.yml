@@ -1,0 +1,47 @@
+--- 
+# Debian specific variables
+
+package_mgr: yum
+
+# Postgresql dependencies
+postgres_dependencies:
+  - postgresql-libs
+  - postgresql-devel
+  - python-psycopg2
+
+# Extra
+postgres_extra:
+  - postgresql95-contrib
+  - postgis24_95
+
+# Postgres package name
+postgres_package: postgresql95-server
+
+# Postgresql init name
+postgres_init_name: "postgresql-{{ postgres_version }}"
+
+# repos
+postgres_repo_key: "https://www.postgresql.org/media/keys/ACCC4CF8.asc "
+
+postgres_rpm_url: "https://download.postgresql.org/pub/repos/yum/{{ postgres_version }}/redhat/rhel-{{ ansible_distribution_major_version }}-x86_64/pgdg-centos95-9.5-3.noarch.rpm"
+
+
+postgis_rpm_url: "http://download.postgresql.org/pub/repos/yum/{{ postgres_version }}/redhat/rhel-{{ ansible_distribution_major_version }}-x86_64/postgis24_95-2.4.2-1.rhel7.x86_64.rpm"
+
+# postgres_initd
+postgres_setup_dir: "/usr/pgsql-{{ postgres_version }}/bin"
+
+# Configuration files path
+postgres_conf_base_dir: "/var/lib/pgsql"
+
+# Data dir
+postgres_data_dir: "{{ postgres_conf_base_dir }}/{{ postgres_version }}/data"
+
+# Configuration files
+postgres_conf_file: "{{ postgres_data_dir }}/postgresql.conf"
+postgres_hba_file: "{{ postgres_data_dir }}/pg_hba.conf"
+postgres_ident_file: "{{ postgres_data_dir }}/pg_ident.conf"
+
+# Centos EPEL repo url
+epel_url: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+

@@ -1,0 +1,109 @@
+---
+## Nginx configuration
+- name: Stop nginx service if it is running
+  systemd:
+     name: "{{ nginx_init_name }}"
+     state: stopped
+
+# Make sure sites-enabled and sites-available dirs
+# exist if not create them (Common to Centos7)
+# Also setup a default page
+- block:
+    - name: Check sites-enabled dir exists
+      stat:
+        path: "{{ nginx_site_enabled_dir }}"
+      register: site_enabled
+
+    - name: Check sites-available dir exists
+      stat:
+        path: "{{ nginx_site_available_dir }}"
+      register: site_available
+
+    # Create sites-enabled and sites-available if no
+    # present
+    - name: Create sites-enabled dir
+      file:
+        path: "{{ nginx_site_enabled_dir }}"
+        state: directory
+        owner: root
+        group: root
+      when: ( site_enabled.stat.exists == False or site_enabled.stat.isdir == False )
+
+    - name: Create sites-available dir
+      file:
+        path: "{{ nginx_site_available_dir }}"
+        state: directory
+        owner: root
+        group: root
+      when: ( site_available.stat.exists == False or site_available.stat.isdir == False )
+
+    # Create a default vhost
+    - name: Setup default vhost
+      template:
+        src: nginx.default.vhost.j2
+        dest: "{{ nginx_default_vhost }}"
+        owner: root
+        group: root
+      register: custom_vhost
+
+    # Create symlink
+    - name: Create symbolic link to /etc/nginx/sites-enabled/vhost
+      file:
+        src: "{{ nginx_default_vhost }}"
+        dest: "{{ nginx_site_enabled_dir }}/default"
+        owner: root
+        group: root
+        state: link
+      when: custom_vhost.changed
+
+  when: ( ansible_distribution|lower == 'centos' ) 
+
+# update nginx.conf
+- name: Update nginx.conf
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_conf_file }}" 
+    owner: root
+    group: root
+    mode: "0644"    
+  notify: restart nginx
+
+- name: Checking if nginx default page exists
+  stat:
+    path: "{{ nginx_default_index }}"
+  register: dfindex
+
+- name: "Removing nginx default page if exists"
+  file:
+   path: "{{ nginx_default_index }}"
+   state: absent
+  when: dfindex.stat.exists
+
+# Checking if {{ nginx_user/group }} exist if not create them
+- name: Nginx run group
+  group:
+    name: "{{ nginx_group }}"
+    state: present
+    
+- name: Nginx run user
+  user:
+    name: "{{ nginx_user }}"
+    state: present
+    createhome: no
+    comment: "Nginx run as user"
+    group: "{{ nginx_group }}"
+
+- name: "Adding custom index page"
+  template: 
+    src: templates/nginx-index.j2
+    dest: "{{ nginx_custom_index }}"
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_group }}"
+    mode: "0644"
+  notify: reload nginx
+
+# Ensure that nginx is started
+- name: Start nginx if it's not started
+  systemd: 
+    name: "{{ nginx_init_name }}"
+    state: started

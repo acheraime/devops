@@ -1,0 +1,24 @@
+---
+###### Centos specific variables
+#
+package_mgr: yum
+
+nginx_package: nginx
+
+# Nginx default debian index page
+nginx_default_index: /usr/share/nginx/html
+
+
+# Configuration base path
+nginx_config_base_path: /etc/nginx
+
+# Configuration file location
+nginx_config_file: "{{nginx_config_base_path}}/nginx.conf"
+
+nginx_init_name: nginx
+
+# Custom nginx page location
+nginx_custom_index: "{{ nginx_default_index }}"
+
+# Root doc
+nginx_root_doc: /usr/share/nginx

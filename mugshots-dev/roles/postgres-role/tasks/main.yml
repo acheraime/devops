@@ -1,0 +1,26 @@
+---
+########### PostgreSQL main task yml this includes all sub-tasks files  ######
+
+# Include os specific variables
+- name: Include OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution|lower }}-{{ absible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution|lower }}.yml"
+    - "{{ ansible_os_family|lower }}.yml"
+
+# Including variables common to all OSes
+- include_vars: default.yml
+  
+# Installation tasks 
+- import_tasks: install.yml
+
+# Configuration tasks
+- import_tasks: configure.yml
+
+# Conditionally include database initialization tasks
+- import_tasks: initialize.yml
+#  when: postgres_mock == true
+
+
+

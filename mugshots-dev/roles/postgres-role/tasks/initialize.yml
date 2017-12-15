@@ -1,0 +1,70 @@
+---
+########### PostgreSQL basic initialization ######
+
+# Check that postgresql is started
+- name: Make sure postgresql is started
+  systemd:
+    name: "{{ postgres_init_name }}"
+    state: started
+  register: postgres_start
+
+# Let's wait that postgres is started if it wasn't already
+- name: Wait postgres to start
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    port: "{{ pf_db_port }}"
+  when: postgres_start|changed
+
+
+# let's see if we have a database dump that needs to be loaded/restored
+- name: Check postgres dump existence
+  stat: 
+    path: "{{ postgres_dump_file }}"
+  register: postgres_dmp
+
+#- debug:
+#    var: "{{ postgres_dump.stat }}"
+
+- name: Create database role base of variable pf_db_user value
+  postgresql_user:
+    name: "{{ pf_db_user }}"
+    password: "{{ pf_db_pass }}"
+    role_attr_flags: NOSUPERUSER,INHERIT,CREATEDB,CREATEROLE,LOGIN
+  when: postgres_mock|bool
+
+
+# Push postgis sql file to host
+- name: Push postgis file to remote host
+  copy:
+    src: "{{ playbook_dir }}/roles/postgres-role/files/politifact-creation.sql"
+    dest: /tmp/politifact-creation.sql
+ 
+# Prepare POSTGIS roles and grant
+- name: Create postgis roles and grant for politifact
+  postgresql_db:
+    name: postgres
+    state: restore
+    target: /tmp/politifact-creation.sql
+    login_user: "{{ postgres_user }}"
+    login_password: "{{ postgres_pass }}"
+  when: postgres_mock|bool
+
+# If a dump exists let's restore it 
+- name: "Restore database from local file - this may take awhile"
+  postgresql_db:
+    name: politifact
+    target: "{{ postgres_dump_file }}"
+    owner: "{{ pf_db_user }}"
+    state: restore
+    login_user: "{{ postgres_user }}"
+    login_password: "{{ postgres_pass }}"
+  when: postgres_dmp.stat.exists and postgres_mock|bool
+
+
+# Make sure to remove the dump file
+- name: Remove postgres backup file
+  file:
+    path: "{{ postgres_dump_file }}"
+    state: absent
+  when: postgres_dmp.stat.exists and delete_dump|default('False')|bool
+

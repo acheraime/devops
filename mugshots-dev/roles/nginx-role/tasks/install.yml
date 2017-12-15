@@ -1,0 +1,36 @@
+---
+# Install nxing
+- name: Install nginx
+  action: > 
+     {{ package_mgr }} name={{ nginx_package }} state=present update_cache=yes
+
+# Activate nginx service
+- name: Enable nginx service
+  systemd:
+    name: "{{ nginx_init_name }}"
+    state: started
+    enabled: yes
+
+# Update firewall configuration to allow inbound postgres traffic
+- block:
+    - name: Start Firewalld service if not started yet
+      systemd:
+        name: firewalld
+        state: started
+
+    - name: Add inbound rule for http
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes
+
+    - name: Add inbound rule for https
+      firewalld:
+        service: https
+        permanent: true
+        state: enabled
+        immediate: yes
+
+  when: ( ansible_os_family|lower == 'redhat' and ansible_distribution_major_version == '7' )
+

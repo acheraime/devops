@@ -1,0 +1,17 @@
+# pg_hba.conf PostgreSQL configuration
+{{ ansible_managed|comment }}
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# "local" is for Unix domain socket connections only
+local	all	{{ postgres_user }}	trust
+# IPv4 local connections:
+host	all	{{ postgres_user }}	127.0.0.1/32	password
+host	all     {{ postgres_user }}	::1/128		password
+
+{% if db_user_perm %}
+# Additional permission
+{% for perm in db_user_perm %}
+{{ perm.con_type }}	{{ perm.database }}	{{ perm.user }}		{{ perm.subnet }}	{{ perm.type }}
+{% endfor %}
+{% endif %}
